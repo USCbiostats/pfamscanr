@@ -1,0 +1,19 @@
+Package: pfamscanr
+Type: Package
+Title: An R client for EMBL-EBI's PfamScan API
+Version: 0.1-9999
+Authors@R: c(person("George", "Vega Yon", role=c("aut","cre"),
+         email="g.vegayon@gmail.com", comment = c(ORCID = "0000-0002-3171-0844")),
+         person("National Cancer Institute (NCI)", role = "fnd",
+         comment = "Grant Number 5P01CA196569-02"))
+Description: The EMBL-EBI's "PfamScan" API <doi:10.1093/nar/gkz268> is used to
+  search a FASTA sequence against a library of Pfam HMM. This R client manages
+  the connection with the API, in particular, posting the query, checking the
+  status, and collecting the results.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+  httr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
