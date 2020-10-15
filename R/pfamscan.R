@@ -20,6 +20,7 @@
 #' @details
 #' Internal use only
 #' @export
+#' @importFrom utils read.table
 pfamscan_process <- function(x) {
 
   x <- strsplit(x, "\\n")[[1]]
@@ -34,9 +35,77 @@ pfamscan_process <- function(x) {
 
   tmp <- tempfile(fileext = ".txt")
   cat(x, file=tmp, sep = "\n", append=TRUE)
-  read.table(
+  utils::read.table(
     tmp, header = FALSE, col.names = headers,
     stringsAsFactors = FALSE
+  )
+}
+
+#' @param query_id Character scalar. Id of the query to retrieve, e.g.,
+#' `"pfamscan-R20191015-22133-0197-415408-p2m"`
+#' @rdname pfamscan
+#' @details
+#' The function `pfamscan_retrieve` can be used to retrieve the results of
+#' an specific query. This is useful if, for example, the query was correctly
+#' posted but the function ran out of time waiting for it to be completed.
+#' You can check the list of posted queries during the session using
+#' [pfamscanr_queries]
+#' @export
+pfamscan_retrieve <- function(
+  query_id,
+  ...,
+  api_url       = "https://www.ebi.ac.uk/",
+  path          = "Tools/services/rest/pfamscan",
+  errorfun      = message,
+  verb          = TRUE,
+  json_args     = list()
+) {
+
+  # Checking json defaults
+  if (!("simplifyVector" %in% names(json_args))) {
+    json_args$simplifyVector <- TRUE
+  }
+
+  if (!("simplifyDataFrame" %in% names(json_args))) {
+    json_args$simplifyDataFrame <- TRUE
+  }
+
+  if (!("simplifyMatrix" %in% names(json_args))) {
+    json_args$simplifyMatrix <- TRUE
+  }
+
+  msg <- if (verb) message
+  else function(...) return(invisible())
+
+  msg("Retrieving the results for query ", query_id, "...", appendLF = FALSE)
+  query <- httr::GET(
+    url = api_url,
+    path = c("Tools/services/rest/pfamscan", "result", query_id, "out"),
+    httr::add_headers(
+      Accept = "text/plain"
+    ),
+    ...
+  )
+
+  if (httr::status_code(query) != 200) {
+    errorfun(
+      sprintf(
+        "Retrieving the query id %s did not worked: %s",
+        query_id,
+        httr::content(query)
+      )
+    )
+    return(NULL)
+  }
+
+  msg("Done!")
+
+  do.call(
+    jsonlite::fromJSON,
+    c(
+      list(txt = httr::content(query)),
+      json_args
+    )
   )
 }
 
@@ -45,8 +114,8 @@ pfamscan_process <- function(x) {
 #' This uses the EBI API. Details here:
 #' https://www.ebi.ac.uk/Tools/common/tools/help/index.html
 #'
-#' @param fasta_str A string representing a single sequence in fasta format
-#' @param email Required by the API.
+#' @param fasta_str A string representing a single sequence in fasta format (details)
+#' @param email,evalue,asp Query parameters, see [here](https://www.ebi.ac.uk/seqdb/confluence/display/THD/PfamScan).
 #' @param api_url,path URL path to the API.
 #' @param maxchecktime Max wait time for the results (seconds).
 #' @param wait Time, in seconds, to wait between checks.
@@ -54,24 +123,60 @@ pfamscan_process <- function(x) {
 #' @param max_post_size Maximum length of the string to POST using curl.
 #' @param verb Logical scalar. When `TRUE` the function will print informative
 #' messages.
-#' @param ... Further arguments passed to [httr:POST()] and [httr:GET()].
+#' @param ... Further arguments passed to [httr::POST()] and [httr::GET()].
+#' @param json_args Arguments passed to [jsonlite::fromJSON()] (see details).
+#' @details
+#' If `fasta_str` is a vector including multiple sequences to submit, the
+#' function will make either a single call to the API or multiple depending
+#' on whether the entire vector can be concatenated to a single string
+#' with [nchar()] < `max_post_size`.
+#'
+#' The function returns the response (in JSON format) parsed using the function
+#' [jsonlite::fromJSON()].
+#'
 #' @references
 #' Madeira F, Park YM, Lee J, et al. The EMBL-EBI search and sequence analysis
 #' tools APIs in 2019. Nucleic Acids Research. 2019 Jul;47(W1):W636-W641.
 #' \doi{10.1093/nar/gkz268}.
 #' @export
 #' @importFrom httr POST GET add_headers status_code content
+#' @importFrom jsonlite fromJSON
+#' @examples
+#' \dontrun{
+#' # This is an example extracted directly from the website
+#' # https://www.ebi.ac.uk/Tools/pfa/pfamscan/
+#' ans <- pfamscan(
+#'   fasta_str = ">sp|P35858|ALS_HUMAN Insulin-like growth factor-binding protein complex acid labile subunit OS=Homo sapiens GN=IGFALS PE=1 SV=1
+#' MALRKGGLALALLLLSWVALGPRSLEGADPGTPGEAEGPACPAACVCSYDD
+#' DADELSVFCSSRNLTRLPDGVPGGTQALWLDGNNLSSVPPAAFQNLSSLGF
+#' LNLQGGQLGSLEPQALLGLENLCHLHLERNQLRSLALGTFAHTPALASLGL
+#' SNNRLSRLEDGLFEGLGSLWDLNLGWNSLAVLPDAAFRGLGSLRELVLAGN
+#' RLAYLQPALFSGLAELRELDLSRNALRAIKANVFVQLPRLQKLYLDRNLIA
+#' AVAPGAFLGLKALRWLDLSHNRVAGLLEDTFPGLLGLRVLRLSHNAIASLR
+#' PRTFKDLHFLEELQLGHNRIRQLAERSFEGLGQLEVLTLDHNQLQEVKAGA
+#' FLGLTNVAVMNLSGNCLRNLPEQVFRGLGKLHSLHLEGSCLGRIRPHTFTG
+#' LSGLRRLFLKDNGLVGIEEQSLWGLAELLELDLTSNQLTHLPHRLFQGLGK
+#' LEYLLLSRNRLAELPADALGPLQRAFWLDVSHNRLEALPNSLLAPLGRLRY
+#' LSLRNNSLRTFTPQPPGLERLWLEGNPWDCGCPLKALRDFALQNPSAVPRF
+#' VQAICEGDDCQPPAYTYNNITCASPPEVVGLDLRDLSEAHFAPC",
+#'   email     = "your@email.com",
+#'   httr::config(connecttimeout=60)
+#' )
+#' }
 pfamscan <- function(
   fasta_str,
   email,
   ...,
-  api_url      = "https://www.ebi.ac.uk/",
-  path         = "Tools/services/rest/pfamscan",
-  maxchecktime = 120,
-  wait         = 1,
-  errorfun     = message,
+  evalue        = 10,
+  asp           = "false",
+  api_url       = "https://www.ebi.ac.uk/",
+  path          = "Tools/services/rest/pfamscan",
+  maxchecktime  = 120,
+  wait          = 1,
+  errorfun      = message,
   max_post_size = 2000L,
-  verb          = TRUE
+  verb          = TRUE,
+  json_args     = list()
 ) {
 
   # Checking lengths
@@ -88,12 +193,16 @@ pfamscan <- function(
       X             = sizes,
       FUN           = pfamscan,
       email         = email,
+      evalue        = evalue,
+      asp           = asp,
       ...,
       path          = path,
       maxchecktime  = maxchecktime,
       wait          = wait,
       errorfun      = errorfun,
-      max_post_size = max_post_size
+      max_post_size = max_post_size,
+      verb          = verb,
+      json_args     = json_args
     )
 
     return(do.call(rbind, ans))
@@ -128,7 +237,9 @@ pfamscan <- function(
     body = list(
       email    = email,
       database = "pfam-a",
-      format   = "txt",
+      format   = "json",
+      asp      = asp,
+      evalue   = evalue,
       sequence = fasta_str
     ),
     ...
@@ -142,6 +253,9 @@ pfamscan <- function(
 
   # Retrieving the id
   query_id <- httr::content(query1)
+
+  # Adding the query to the list of queries
+  pfamscanr_queries$add(query_id)
 
   # Checking if it is done
   time0 <- Sys.time()
@@ -185,32 +299,18 @@ pfamscan <- function(
     return(NULL)
   }
 
+  pfamscanr_queries$update_done()
 
   msg("Success!")
 
-  # Retrieving the results
-  # curl -X GET --header 'Accept: text/plain' ''
-  msg("Retrieving the results for query ", query_id, "...", appendLF = )
-  query3 <- httr::GET(
-    url = api_url,
-    path = c("Tools/services/rest/pfamscan", "result", query_id, "out"),
-    httr::add_headers(
-      Accept = "text/plain"
-    ),
-    ...
+  pfamscan_retrieve(
+    query_id  = query_id,
+    ...,
+    api_url   = api_url,
+    path      = path,
+    errorfun  = errorfun,
+    verb      = verb,
+    json_args = json_args
   )
-
-  if (httr::status_code(query3) != 200) {
-    errorfun(
-      sprintf(
-        "Retrieving the query id %s did not worked: %s",
-        query_id,
-        httr::content(query3)
-      )
-    )
-    return(NULL)
-  }
-  msg("Done!")
-  pfamscan_process(httr::content(query3))
 
 }

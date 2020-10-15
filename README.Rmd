@@ -1,0 +1,66 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# pfamscanr
+
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.com/USCbiostats/pfamscanr.svg?branch=master)](https://travis-ci.com/USCbiostats/pfamscanr)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/USCbiostats/pfamscanr?branch=master&svg=true)](https://ci.appveyor.com/project/USCbiostats/pfamscanr)
+<!-- badges: end -->
+
+The goal of pfamscanr is to ...
+
+## Installation
+
+You can download the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("USCbiostats/pfamscanr")
+```
+## Example
+
+This is an example extracted directly from the website https://www.ebi.ac.uk/Tools/pfa/pfamscan/
+
+```{r example, eval=FALSE}
+library(pfamscanr)
+ans <- pfamscan(
+  fasta_str = ">sp|P35858|ALS_HUMAN OS=Homo sapiens GN=IGFALS PE=1 SV=1
+  MALRKGGLALALLLLSWVALGPRSLEGADPGTPGEAEGPACPAACVCSYDDDADEL
+  SVFCSSRNLTRLPDGVPGGTQALWLDGNNLSSVPPAAFQNLSSLGFLNLQGGQLGS
+  LEPQALLGLENLCHLHLERNQLRSLALGTFAHTPALASLGLSNNRLSRLEDGLFEG
+  LGSLWDLNLGWNSLAVLPDAAFRGLGSLRELVLAGNRLAYLQPALFSGLAELRELD
+  LSRNALRAIKANVFVQLPRLQKLYLDRNLIAAVAPGAFLGLKALRWLDLSHNRVAG
+  LLEDTFPGLLGLRVLRLSHNAIASLRPRTFKDLHFLEELQLGHNRIRQLAERSFEG
+  LGQLEVLTLDHNQLQEVKAGAFLGLTNVAVMNLSGNCLRNLPEQVFRGLGKLHSLH
+  LEGSCLGRIRPHTFTGLSGLRRLFLKDNGLVGIEEQSLWGLAELLELDLTSNQLTH
+  LPHRLFQGLGKLEYLLLSRNRLAELPADALGPLQRAFWLDVSHNRLEALPNSLLAP
+  LGRLRYLSLRNNSLRTFTPQPPGLERLWLEGNPWDCGCPLKALRDFALQNPSAVPR
+  FVQAICEGDDCQPPAYTYNNITCASPPEVVGLDLRDLSEAHFAPC",
+  email = "your@email.com",
+  httr::config(connecttimeout=60)
+)
+```
+
+```{r echo=FALSE}
+data("P35858", package="pfamscanr")
+ans <- P35858
+```
+
+```{r}
+ans
+```
+
+
