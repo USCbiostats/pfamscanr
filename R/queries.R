@@ -1,4 +1,11 @@
 #' Queries performed during the current R Session
+#'
+#' This environment keeps track of the query ids successfully submitted
+#' and whether they were marked as "done" or not.
+#'
+#' @details The [print] method prints a data.frame with the information.
+#' The data is stored directly in the `dat` slot.
+#'
 #' @export
 pfamscanr_queries <- new.env(parent = emptyenv())
 pfamscanr_queries[["dat"]] <- NULL
@@ -13,7 +20,7 @@ pfamscanr_queries[["add"]] <- function(str) {
       id          = str,
       done        = FALSE,
       retrieved   = FALSE,
-      time_posted = Sys.Date()
+      time_posted = Sys.time()
       )
   )
 
@@ -42,7 +49,10 @@ pfamscanr_queries[["update_retrieved"]] <- function(str = NULL) {
 print.pfamscanr_queries <- function(x,...) {
   if (is.null(x[["dat"]]))
     cat("No queries yet.\n")
-  else
+  else {
     print(x[["dat"]])
+    cat(rep("-", getOption("width", 80)), sep = "")
+    cat("\nNote: You can access the data directly by typing $dat.\n")
+  }
   invisible(x)
 }

@@ -11,6 +11,11 @@ An object of class \code{pfamscanr_queries} (inherits from \code{environment}) o
 pfamscanr_queries
 }
 \description{
-Queries performed during the current R Session
+This environment keeps track of the query ids successfully submitted
+and whether they were marked as "done" or not.
+}
+\details{
+The \link{print} method prints a data.frame with the information.
+The data is stored directly in the \code{dat} slot.
 }
 \keyword{datasets}

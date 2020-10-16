@@ -205,6 +205,14 @@ pfamscan <- function(
       json_args     = json_args
     )
 
+    # Adding different rownames
+    j <- 1L
+    for (i in seq_along(ans)) {
+      if (!is.null(ans[[i]]))
+      rownames(ans[[i]]) <- j:(j + nrow(ans[[i]]))
+      j <- j + nrow(ans[[i]]) + 1
+    }
+
     return(do.call(rbind, ans))
 
   }
@@ -212,6 +220,8 @@ pfamscan <- function(
   # Posting the data to the EBI server
   sequences <- gsub("\\n[[:upper:]\\n*]+", "", fasta_str)
   sequences <- strsplit(sequences, "\\n?>")[[1L]][-1]
+  sequences <- sub("(;|>)", "", sequences)
+  sequences <- sub("\\s+.+", "", sequences, perl = TRUE)
 
   msg <- if (verb) message
   else function(...) return(invisible())
@@ -295,7 +305,7 @@ pfamscan <- function(
   }
 
   if (difftime(Sys.time(), time0, units="secs") >= maxchecktime) {
-    errorfun("Checking query ", query_id, " went out-of-time.")
+    errorfun("\nChecking query ", query_id, " went out-of-time.")
     return(NULL)
   }
 
