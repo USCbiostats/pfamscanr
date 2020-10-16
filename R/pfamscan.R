@@ -120,7 +120,7 @@ pfamscan_retrieve <- function(
 #' @param maxchecktime Max wait time for the results (seconds).
 #' @param wait Time, in seconds, to wait between checks.
 #' @param errorfun A function to either print error or message.
-#' @param max_post_size Maximum length of the string to POST using curl.
+#' @param query_size Maximum number of sequences per query (limit 100).
 #' @param verb Logical scalar. When `TRUE` the function will print informative
 #' messages.
 #' @param ... Further arguments passed to [httr::POST()] and [httr::GET()].
@@ -128,8 +128,7 @@ pfamscan_retrieve <- function(
 #' @details
 #' If `fasta_str` is a vector including multiple sequences to submit, the
 #' function will make either a single call to the API or multiple depending
-#' on whether the entire vector can be concatenated to a single string
-#' with [nchar()] < `max_post_size`.
+#' on `query_size`. As of now, the API limits 100 sequences per query.
 #'
 #' The function returns the response (in JSON format) parsed using the function
 #' [jsonlite::fromJSON()].
@@ -174,16 +173,19 @@ pfamscan <- function(
   maxchecktime  = 120,
   wait          = 1,
   errorfun      = message,
-  max_post_size = 2000L,
+  query_size    = 100L,
   verb          = TRUE,
   json_args     = list()
 ) {
 
+  # Processing fasta
+  fasta_str <- split_fasta(fasta_str)
+
   # Checking lengths
-  if (length(fasta_str) > 1) {
+  if (length(fasta_str) > query_size) {
 
     # Learning the size of the sequences
-    sizes <- cumsum(nchar(fasta_str)) %/% (max_post_size + 1)
+    sizes <- 1:length(fasta_str) %/% (query_size)
 
     # Making the splits
     sizes <- split(fasta_str, sizes)
@@ -200,7 +202,7 @@ pfamscan <- function(
       maxchecktime  = maxchecktime,
       wait          = wait,
       errorfun      = errorfun,
-      max_post_size = max_post_size,
+      query_size    = query_size,
       verb          = verb,
       json_args     = json_args
     )
@@ -208,14 +210,22 @@ pfamscan <- function(
     # Adding different rownames
     j <- 1L
     for (i in seq_along(ans)) {
-      if (!is.null(ans[[i]]))
-      rownames(ans[[i]]) <- j:(j + nrow(ans[[i]]))
-      j <- j + nrow(ans[[i]]) + 1
+      if (!is.null(ans[[i]]) && (nrow(ans[[i]]) > 0L)) {
+        rownames(ans[[i]]) <- j:(j + nrow(ans[[i]]) - 1L)
+
+        # Renaming data.frames nested (it is an issue)
+        for (k in which(sapply(ans[[i]], inherits, what = "data.frame")))
+          rownames(ans[[i]][[k]]) <- rownames(ans[[i]])
+        j <- j + nrow(ans[[i]])
+      } else {
+
+      }
     }
 
     return(do.call(rbind, ans))
 
   }
+  fasta_str <- paste(fasta_str, collapse="\n")
 
   # Posting the data to the EBI server
   sequences <- gsub("\\n[[:upper:]\\n*]+", "", fasta_str)

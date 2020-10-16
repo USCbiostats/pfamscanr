@@ -4,8 +4,7 @@
 \name{P35858}
 \alias{P35858}
 \title{Insulin-like growth factor-binding protein complex acid labile subunit}
-\format{
-\describe{
+\format{\describe{
 \item{\code{model_length}}{Character}
 \item{\code{align}}{List}
 \item{\code{env}}{data.frame with 2 variables}
@@ -20,8 +19,7 @@
 \item{\code{bits}}{character}
 \item{\code{clan}}{character}
 \item{\code{seq}}{data.frame with three variables}
-}
-}
+}}
 \source{
 \url{https://www.uniprot.org/uniprot/P35858}
 }

@@ -5,31 +5,15 @@
 \alias{pfamscan}
 \title{Query the online service PfamScan}
 \usage{
-pfamscan_retrieve(
-  query_id,
-  ...,
-  api_url = "https://www.ebi.ac.uk/",
-  path = "Tools/services/rest/pfamscan",
-  errorfun = message,
-  verb = TRUE,
-  json_args = list()
-)
+pfamscan_retrieve(query_id, ..., api_url = "https://www.ebi.ac.uk/",
+  path = "Tools/services/rest/pfamscan", errorfun = message,
+  verb = TRUE, json_args = list())
 
-pfamscan(
-  fasta_str,
-  email,
-  ...,
-  evalue = 10,
-  asp = "false",
+pfamscan(fasta_str, email, ..., evalue = 10, asp = "false",
   api_url = "https://www.ebi.ac.uk/",
-  path = "Tools/services/rest/pfamscan",
-  maxchecktime = 120,
-  wait = 1,
-  errorfun = message,
-  max_post_size = 2000L,
-  verb = TRUE,
-  json_args = list()
-)
+  path = "Tools/services/rest/pfamscan", maxchecktime = 120,
+  wait = 1, errorfun = message, query_size = 100L, verb = TRUE,
+  json_args = list())
 }
 \arguments{
 \item{query_id}{Character scalar. Id of the query to retrieve, e.g.,
@@ -54,7 +38,7 @@ messages.}
 
 \item{wait}{Time, in seconds, to wait between checks.}
 
-\item{max_post_size}{Maximum length of the string to POST using curl.}
+\item{query_size}{Maximum number of sequences per query (limit 100).}
 }
 \description{
 This uses the EBI API. Details here:
@@ -69,8 +53,7 @@ You can check the list of posted queries during the session using
 
 If \code{fasta_str} is a vector including multiple sequences to submit, the
 function will make either a single call to the API or multiple depending
-on whether the entire vector can be concatenated to a single string
-with \code{\link[=nchar]{nchar()}} < \code{max_post_size}.
+on \code{query_size}. As of now, the API limits 100 sequences per query.
 
 The function returns the response (in JSON format) parsed using the function
 \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}}.

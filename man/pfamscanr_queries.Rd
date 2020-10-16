@@ -4,9 +4,7 @@
 \name{pfamscanr_queries}
 \alias{pfamscanr_queries}
 \title{Queries performed during the current R Session}
-\format{
-An object of class \code{pfamscanr_queries} (inherits from \code{environment}) of length 4.
-}
+\format{An object of class \code{pfamscanr_queries} (inherits from \code{environment}) of length 4.}
 \usage{
 pfamscanr_queries
 }
